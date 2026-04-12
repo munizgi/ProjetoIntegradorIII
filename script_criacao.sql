@@ -32,9 +32,9 @@ CREATE TABLE tipo_movimento (
 -- TABELA TRANSPORTADORA _____________________________________________________________________________________
 DROP TABLE IF EXISTS transportadora CASCADE;
 CREATE TABLE transportadora (
-    id_transp   SERIAL PRIMARY KEY NOT NULL,
-    nome_transp VARCHAR (100)      NOT NULL,
-    CNPJ_transp VARCHAR (20)       NOT NULL
+    id_transp   SERIAL PRIMARY KEY  NOT NULL,
+    nome_transp VARCHAR (100)       NOT NULL,
+    CNPJ_transp VARCHAR (20) UNIQUE NOT NULL
                                                 );
 
 -- TABELA FORNECEDOR __________________________________________________________________________________________
@@ -43,7 +43,7 @@ DROP TABLE IF EXISTS fornecedor CASCADE;
 CREATE TABLE fornecedor (
     id_fornecedor SERIAL    PRIMARY KEY NOT NULL,
     nome_forn     VARCHAR (150)         NOT NULL,
-    CNPJ_forn     VARCHAR (20)          NOT NULL,
+    CNPJ_forn     VARCHAR (20) UNIQUE   NOT NULL,
     cidade_forn   VARCHAR (50)          NOT NULL,
     estado_forn   VARCHAR (2)           NOT NULL
                                                     );
@@ -58,16 +58,16 @@ CREATE TABLE movimentacao_estoque (
     id_lote INT NOT NULL, --fk
     id_tipo_mov INT NOT NULL, --fk
     id_fornecedor INT, --fk
-    id_transp INT --fk
+    id_transp INT, --fk
     data_mov DATE NOT NULL,
-    quantidade_prod INT NOT NULL, --qtd de item/produto
+    quantidade_prod DECIMAL(12,3) NOT NULL, --qtd de item/produto
     unidade_movimentada VARCHAR(10), -- em que unidade de medida esse prod saiu
     preco_compra DECIMAL(10,2),
     preco_venda DECIMAL(10,2),
 
-    FOREIGN KEY (id_prod) REFERENCES produto(id_produto),
+    FOREIGN KEY (id_prod) REFERENCES produto(id_prod),
     FOREIGN KEY (id_lote) REFERENCES lote(id_lote),
-    FOREIGN KEY (id_tipo_mov) REFERENCES tipo_movimento(id_tipo_mov)
+    FOREIGN KEY (id_tipo_mov) REFERENCES tipo_movimento(id_tipo_mov),
     FOREIGN KEY (id_transp) REFERENCES transportadora(id_transp),
     FOREIGN KEY (id_fornecedor) REFERENCES fornecedor(id_fornecedor)
 );
