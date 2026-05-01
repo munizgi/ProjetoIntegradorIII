@@ -1,9 +1,15 @@
+import os
+
+print("Diretório atual:", os.getcwd())
+print("Arquivos na pasta:")
+print(os.listdir())
+
 from sqlalchemy import create_engine
 import pandas as pd
 
 # CONFIGURANDO CONEXÃO - a create engine faz a ponte entre o banco e a planilha
 engine = create_engine("postgresql+psycopg2://postgres:0401@localhost:5432/etl_teste")
-arquivo = "planilhageralMFIX.xlsx"
+arquivo = "mfix.xlsx"
 
 df_fornecedor =     pd.read_excel(arquivo, sheet_name='fornecedor')  #aqui a pandas tá lendo cada página da planilha
 df_lotes =          pd.read_excel(arquivo, sheet_name='lotes')
@@ -61,8 +67,8 @@ df_mov = df_mov.rename(columns={
     'UNIDADE DE MEDIDA':        'unidade_medida'
 })
 
-df_lotes    ['data_validade'] = pd.to_datetime(df_lotes['data_validade'], errors='coerce')
-df_mov      ['data'] =          pd.to_datetime(df_mov    ['data'],          errors='coerce')   #tratamento de data
+df_lotes    ['data_validade'] = pd.to_datetime(df_lotes['data_validade'],  errors='coerce')
+df_mov      ['data'] =          pd.to_datetime(df_mov    ['data'],         errors='coerce')   #tratamento de data
 # pega o atributo data e transforma o tipo de dado, os que não obedecerem a conversão são postos como inválidos
 
 ##### tratamento de data 
@@ -84,7 +90,7 @@ for coluna in ['data_saida', 'data_entrada']:
     
     # 4. Onde NÃO era número (já era data em texto), tenta converter direto
     df_produto.loc[~mask_num, coluna] = pd.to_datetime(
-        df_produto.loc[~mask_num, coluna], 
+        df_produto.loc[~mask_num, coluna],
         errors='coerce'
     )
 
