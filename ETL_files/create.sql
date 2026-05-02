@@ -7,6 +7,8 @@ DROP TABLE IF EXISTS fornecedor;
 
 DROP TABLE IF EXISTS tipo_mov;
 
+DROP TABLE tipo_movimentacao;
+
 -- FORNECEDOR
 CREATE TABLE fornecedor (
     id SERIAL PRIMARY KEY,
