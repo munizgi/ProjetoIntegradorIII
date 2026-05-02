@@ -125,7 +125,7 @@ df_lotes            .to_sql('lotes',            engine, if_exists='append', inde
 
 # puxando os IDs das tabelas base
 df_forn_db =    pd.read_sql("SELECT id, nome_forn FROM fornecedor", engine)
-df_prod_db =    pd.read_sql("SELECT id, descricao_prod FROM produto", engine)
+df_prod_db =    pd.read_sql("SELECT id, descricao_prod, preco_venda FROM produto",engine)
 df_transp_db =  pd.read_sql("SELECT id, nome_transp FROM transportadora", engine)
 df_lotes_db =   pd.read_sql("SELECT id, numero_lote FROM lotes", engine )
 
@@ -203,6 +203,7 @@ df_mov_final = df_mov[[
     'tipo_mov_id',
     'data',
     'qtde_prod',
+    'preco_venda',
     'unidade_medida'
                         ]]
 

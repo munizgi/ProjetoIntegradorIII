@@ -61,6 +61,7 @@ CREATE TABLE mov_estoque (
     tipo_mov_id INTEGER,
     data DATE,
     qtde_prod NUMERIC(10,2),
+    preco_venda NUMERIC(10,2),
     unidade_medida VARCHAR(20),
 
     FOREIGN KEY (produto_id) REFERENCES produto(id),

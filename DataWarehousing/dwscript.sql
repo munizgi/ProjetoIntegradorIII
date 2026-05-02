@@ -58,7 +58,9 @@ CREATE TABLE fato_movimentacao (
 );
 
 -- ETL DATAWAREHOUSE
-INSERT INTO dim_produto SELECT id, descricao_prod, categoria_prod, procedencia_prod FROM produto; 
+INSERT INTO dim_produto
+SELECT id, descricao_prod, categoria_prod, procedencia_prod
+FROM produto;
 
 INSERT INTO dim_tempo SELECT DISTINCT data,
     EXTRACT(DAY FROM data),
@@ -67,24 +69,24 @@ INSERT INTO dim_tempo SELECT DISTINCT data,
     TO_CHAR(data, 'Month')
 FROM mov_estoque;
 
-INSERT INTO dim_tipo_mov SELECT id_tipo_mov, descricao_mov FROM tipo_movimento;
+INSERT INTO dim_tipo_mov SELECT id, descricao_mov FROM tipo_mov;
 
-INSERT INTO dim_fornecedor SELECT id_fornecedor, nome_forn, cidade_forn, estado_forn FROM fornecedor;
+INSERT INTO dim_fornecedor SELECT id, nome_forn, cidade_forn, uf_forn FROM fornecedor;
 
-INSERT INTO dim_transportadora SELECT id_transp, nome_transp FROM transportadora;
+INSERT INTO dim_transportadora SELECT id, nome_transp FROM transportadora;
 
-INSERT INTO dim_lote SELECT id_lote, numero_lote, data_validade_lote FROM lote;
+INSERT INTO dim_lote SELECT id, numero_lote, data_validade FROM lotes;
 
 INSERT INTO fato_movimentacao
 SELECT
-    m.id_produto,
-    m.data_mov,
-    m.id_tipo_mov,
-    m.id_fornecedor,
-    m.id_transp,
-    m.id_lote,
-    m.quantidade_prod,
-    (m.quantidade_prod * COALESCE(m.preco_venda, 0))
-FROM movimentacao_estoque m;
+    m.produto_id,
+    m.data,
+    m.tipo_mov_id,
+    m.fornecedor_id,
+    m.transportadora_id,
+    m.lote_id,
+    m.qtde_prod,
+    (m.qtde_prod * COALESCE(m.preco_venda, 0))
+FROM mov_estoque m;
 
 
