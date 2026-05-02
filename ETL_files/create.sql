@@ -5,6 +5,8 @@ DROP TABLE IF EXISTS transportadora;
 DROP TABLE IF EXISTS produto;
 DROP TABLE IF EXISTS fornecedor;
 
+DROP TABLE IF EXISTS tipo_mov;
+
 -- FORNECEDOR
 CREATE TABLE fornecedor (
     id SERIAL PRIMARY KEY,
@@ -43,6 +45,12 @@ CREATE TABLE lotes (
     data_validade DATE
 );
 
+-- TIPO MOVIMENTAÇÃO
+CREATE TABLE tipo_mov (
+    id SERIAL PRIMARY KEY,
+    descricao_mov VARCHAR(20)
+); 
+
 -- MOVIMENTAÇÃO
 CREATE TABLE mov_estoque (
     id SERIAL PRIMARY KEY,
@@ -50,7 +58,7 @@ CREATE TABLE mov_estoque (
     fornecedor_id INTEGER,
     transportadora_id INTEGER,
     lote_id INTEGER,
-    tipo_mov VARCHAR(20),
+    tipo_mov_id INTEGER,
     data DATE,
     qtde_prod NUMERIC(10,2),
     unidade_medida VARCHAR(20),
@@ -58,8 +66,16 @@ CREATE TABLE mov_estoque (
     FOREIGN KEY (produto_id) REFERENCES produto(id),
     FOREIGN KEY (fornecedor_id) REFERENCES fornecedor(id),
     FOREIGN KEY (transportadora_id) REFERENCES transportadora(id),
-    FOREIGN KEY (lote_id) REFERENCES lotes(id)
+    FOREIGN KEY (lote_id) REFERENCES lotes(id),
+    FOREIGN KEY (tipo_mov_id) REFERENCES tipo_mov(id)
 );
+
+INSERT INTO tipo_mov (id, descricao_mov)
+VALUES
+(1, 'ENTRADA'),
+(2, 'SAÍDA'),
+(3, 'AJUSTE');
+
 
 SELECT * FROM mov_estoque;
 
@@ -70,3 +86,4 @@ SELECT * FROM produto;
 SELECT * FROM transportadora;
 
 SELECT * FROM lotes;
+SELECT * FROM tipo_mov

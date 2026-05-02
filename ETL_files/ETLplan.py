@@ -180,13 +180,27 @@ erro_lote = df_mov[df_mov['lote_id'].isna()] # evitar erro de lote, que não pod
 if erro_lote.shape[0] > 0:
     raise ValueError("Erro de lote")
 
-# tabela central final
+###### tratamento para a table tipo_mov
+df_tipo = pd.DataFrame({
+    'id': [1, 2, 3],
+    'tipo_mov': ['ENTRADA', 'SAÍDA', 'AJUSTE']
+})
+
+df_mov['tipo_mov'] = df_mov['tipo_mov'].str.strip().str.upper()
+
+df_mov = df_mov.merge(
+    df_tipo.rename(columns={'id': 'tipo_mov_id'}),
+    on='tipo_mov',
+    how='left'
+)
+
+############# tabela central final
 df_mov_final = df_mov[[
     'produto_id',
     'fornecedor_id',
     'transportadora_id',
     'lote_id',
-    'tipo_mov',
+    'tipo_mov_id',
     'data',
     'qtde_prod',
     'unidade_medida'
@@ -214,13 +228,14 @@ query_demonstracao = """
         p.descricao_prod AS produto,
         f.nome_forn AS fornecedor,
         l.numero_lote AS lote,
-        m.tipo_mov,
+        tm.tipo_mov,
         m.qtde_prod,
         m.unidade_medida
     FROM mov_estoque m
     LEFT JOIN produto p ON m.produto_id = p.id
     LEFT JOIN fornecedor f ON m.fornecedor_id = f.id
     LEFT JOIN lotes l ON m.lote_id = l.id
+    LEFT JOIN tipo_movimentacao tm ON m.tipo_mov_id = tm.id
     ORDER BY m.data DESC
     LIMIT 10;
 """
