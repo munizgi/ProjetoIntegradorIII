@@ -236,7 +236,7 @@ query_demonstracao = """
     LEFT JOIN produto p ON m.produto_id = p.id
     LEFT JOIN fornecedor f ON m.fornecedor_id = f.id
     LEFT JOIN lotes l ON m.lote_id = l.id
-    LEFT JOIN tipo_movimentacao tm ON m.tipo_mov_id = tm.id
+    LEFT JOIN tipo_mov tm ON m.tipo_mov_id = tm.id
     ORDER BY m.data DESC
     LIMIT 10;
 """
