@@ -58,9 +58,7 @@ CREATE TABLE fato_movimentacao (
 );
 
 -- ETL DATAWAREHOUSE
-INSERT INTO dim_produto
-SELECT id, descricao_prod, categoria_prod, procedencia_prod
-FROM produto;
+INSERT INTO dim_produto SELECT id, descricao_prod, categoria_prod, procedencia_prod FROM produto; 
 
 INSERT INTO dim_tempo SELECT DISTINCT data,
     EXTRACT(DAY FROM data),

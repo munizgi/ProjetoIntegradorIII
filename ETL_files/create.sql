@@ -1,3 +1,4 @@
+-- Active: 1779824423773@@localhost@5432@relacionalMFIX
 -- LIMPA
 DROP TABLE IF EXISTS mov_estoque;
 DROP TABLE IF EXISTS lotes;
@@ -81,12 +82,21 @@ VALUES
 
 
 SELECT * FROM mov_estoque;
-
 SELECT * FROM fornecedor;
-
 SELECT * FROM produto;
-
 SELECT * FROM transportadora;
-
 SELECT * FROM lotes;
 SELECT * FROM tipo_mov
+
+SELECT  id_produto, descricao_prod, categoria_prod FROM dim_produto;
+
+-- CONSULTA DO FATURAMENTO SEMANAL DO ANO DE 2026
+SELECT
+    EXTRACT(YEAR FROM data) AS ano,
+    EXTRACT(WEEK FROM data) AS semana,
+    ROUND(SUM(valor_total), 2) AS faturamento_semanal
+FROM fato_movimentacao
+WHERE (EXTRACT(YEAR FROM data) = 2026) AND (id_tipo_mov = 2) -- Considerando apenas as saídas para o faturamento
+GROUP BY ano, semana
+ORDER BY ano, semana;
+
