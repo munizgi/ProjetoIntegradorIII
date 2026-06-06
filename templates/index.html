@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html lang="pt-br">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        MFIX Analytics
+    </title>
+
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+<body>
+
+<!-- =====================================================
+HEADER
+===================================================== -->
+
+<header class="topbar">
+
+    <div class="titulo-area">
+
+        <h1>
+
+            DATA WAREHOUSE
+            <span>MFIX</span>
+
+        </h1>
+
+        <p>
+
+            Central de monitoramento e inteligência logística
+
+        </p>
+
+    </div>
+
+    <a href="/dashboard">
+
+        DASHBOARD BI
+
+    </a>
+
+</header>
+
+<!-- =====================================================
+FILTROS
+===================================================== -->
+
+<form method="POST" class="filtros">
+
+    <div class="autocomplete-box">
+
+        <input
+        type="text"
+        name="produto"
+        id="produtoInput"
+        placeholder="Pesquisar produto"
+        autocomplete="off"
+        >
+
+        <div
+        id="autocomplete-list"
+        class="autocomplete-list"
+        ></div>
+
+    </div>
+
+    <select name="movimentacao">
+
+        <option value="">
+            Movimentação
+        </option>
+
+        <option value="1">
+            Entrada
+        </option>
+
+        <option value="2">
+            Saída
+        </option>
+
+        <option value="3">
+            Ajuste
+        </option>
+
+    </select>
+
+    <input
+    type="text"
+    name="fornecedor"
+    placeholder="Fornecedor"
+    >
+
+    <input
+    type="date"
+    name="data_inicial"
+    >
+
+    <input
+    type="date"
+    name="data_final"
+    >
+
+    <button type="submit">
+
+        PESQUISAR
+
+    </button>
+
+</form>
+
+<!-- =====================================================
+CARDS
+===================================================== -->
+
+<div class="grid-cards">
+
+{% for item in dados %}
+
+<div class="card">
+
+    <div class="card-top">
+
+        <div class="status
+        {% if item.descricao_mov == 'ENTRADA' %}
+        entrada
+        {% elif item.descricao_mov == 'SAÍDA' %}
+        saida
+        {% else %}
+        ajuste
+        {% endif %}
+        ">
+
+            {{ item.descricao_mov }}
+
+        </div>
+
+    </div>
+
+    <h2>
+
+        {{ item.descricao_prod }}
+
+    </h2>
+
+    <div class="linha"></div>
+
+    <div class="info">
+
+        <p>
+
+            <strong>Fornecedor</strong>
+            {{ item.nome_forn }}
+
+        </p>
+
+        <p>
+
+            <strong>Quantidade</strong>
+            {{ item.quantidade }}
+
+        </p>
+
+        <p>
+
+            <strong>Valor</strong>
+            R$ {{ item.valor_total }}
+
+        </p>
+
+        <p>
+
+            <strong>Categoria</strong>
+            {{ item.categoria_prod }}
+
+        </p>
+
+        <p>
+
+            <strong>Procedência</strong>
+            {{ item.procedencia_prod }}
+
+        </p>
+
+        <p>
+
+            <strong>Lote</strong>
+            {{ item.numero_lote }}
+
+        </p>
+
+        <p>
+
+            <strong>Validade</strong>
+            {{ item.data_validade_lote }}
+
+        </p>
+
+        <p>
+
+            <strong>Transportadora</strong>
+            {{ item.nome_transp }}
+
+        </p>
+
+        <p>
+
+            <strong>Data</strong>
+            {{ item.data }}
+
+        </p>
+
+        <p>
+
+            <strong>Maior venda</strong>
+            {{ item.melhor_venda }}
+
+        </p>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<!-- =====================================================
+SCRIPT AUTOCOMPLETE
+===================================================== -->
+
+<script>
+
+const produtoInput =
+document.getElementById("produtoInput")
+
+const lista =
+document.getElementById("autocomplete-list")
+
+produtoInput.addEventListener("keyup", async () => {
+
+    const termo =
+    produtoInput.value
+
+    if(termo.length < 1){
+
+        lista.style.display = "none"
+
+        return
+    }
+
+    const response =
+    await fetch(
+        `/autocomplete_produto?term=${termo}`
+    )
+
+    const data =
+    await response.json()
+
+    lista.innerHTML = ""
+
+    lista.style.display = "block"
+
+    data.forEach(item => {
+
+        const div =
+        document.createElement("div")
+
+        div.classList.add(
+            "autocomplete-item"
+        )
+
+        div.innerText =
+        item.descricao_prod
+
+        div.onclick = () => {
+
+            produtoInput.value =
+            item.descricao_prod
+
+            lista.style.display = "none"
+        }
+
+        lista.appendChild(div)
+    })
+})
+
+</script>
+
+</body>
+
+</html>

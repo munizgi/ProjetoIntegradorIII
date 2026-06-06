@@ -1,0 +1,523 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+
+    background:
+    linear-gradient(
+        180deg,
+        #05070d 0%,
+        #09111f 50%,
+        #180607 100%
+    );
+
+    min-height:100vh;
+
+    font-family:
+    "Segoe UI",
+    Arial,
+    sans-serif;
+
+    color:white;
+}
+
+/* =====================================================
+TOPBAR
+===================================================== */
+
+.topbar{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    padding:35px 50px;
+
+    border-bottom:
+    1px solid rgba(255,255,255,0.05);
+
+    background:
+    rgba(6,10,18,0.96);
+}
+
+.titulo-area h1{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    font-size:56px;
+
+    font-weight:900;
+
+    letter-spacing:1px;
+
+    text-transform:uppercase;
+
+    color:white;
+}
+
+/* =====================================================
+MFIX
+===================================================== */
+
+.titulo-area h1 span{
+
+    background:#595959;
+
+    color:white;
+
+    padding:6px 14px;
+
+    border-radius:4px;
+
+    font-size:38px;
+
+    font-weight:900;
+
+    letter-spacing:2px;
+
+    border:
+    1px solid rgba(255,255,255,0.08);
+}
+
+.titulo-area p{
+
+    margin-top:12px;
+
+    color:#8d96a5;
+
+    font-size:15px;
+}
+
+/* =====================================================
+BOTÃO
+===================================================== */
+
+.topbar a{
+
+    background:
+    linear-gradient(
+        180deg,
+        #ff2d2d,
+        #a40d0d
+    );
+
+    color:white;
+
+    text-decoration:none;
+
+    padding:16px 28px;
+
+    border-radius:14px;
+
+    font-size:14px;
+
+    font-weight:700;
+}
+
+/* =====================================================
+FILTROS
+===================================================== */
+
+.filtros{
+
+    display:flex;
+
+    gap:16px;
+
+    flex-wrap:wrap;
+
+    padding:35px 50px;
+}
+
+.filtros input,
+.filtros select{
+
+    background:#121b2e !important;
+
+    border:
+    1px solid rgba(255,255,255,0.05);
+
+    color:white !important;
+
+    height:58px;
+
+    padding:0 18px;
+
+    border-radius:16px;
+
+    min-width:220px;
+
+    outline:none;
+
+    font-size:15px;
+
+    appearance:none;
+
+    -webkit-appearance:none;
+
+    -moz-appearance:none;
+}
+
+.filtros input::placeholder{
+
+    color:#8b95a7;
+}
+
+.filtros select{
+
+    background-image:
+    url("data:image/svg+xml;utf8,<svg fill='white' height='18' viewBox='0 0 24 24' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+
+    background-repeat:no-repeat;
+
+    background-position:
+    right 15px center;
+
+    padding-right:45px;
+
+    cursor:pointer;
+}
+
+.filtros select option{
+
+    background:#121b2e;
+
+    color:white;
+}
+
+.filtros button{
+
+    background:
+    linear-gradient(
+        180deg,
+        #ff2d2d,
+        #a40d0d
+    );
+
+    border:none;
+
+    color:white;
+
+    padding:0 28px;
+
+    height:58px;
+
+    border-radius:16px;
+
+    cursor:pointer;
+
+    font-weight:700;
+
+    font-size:14px;
+}
+
+/* =====================================================
+GRID
+===================================================== */
+
+.grid-cards{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(3,1fr);
+
+    gap:25px;
+
+    padding:0 50px 50px 50px;
+}
+
+/* =====================================================
+CARD
+===================================================== */
+
+.card{
+
+    background:
+    linear-gradient(
+        180deg,
+        #111827 0%,
+        #0b1422 100%
+    );
+
+    border-radius:22px;
+
+    padding:30px;
+
+    border-top:
+    4px solid #ff2d2d;
+
+    border:
+    1px solid rgba(255,255,255,0.05);
+
+    min-height:540px;
+
+    transition:0.2s;
+}
+
+.card:hover{
+
+    transform:translateY(-3px);
+}
+
+.card-top{
+
+    display:flex;
+
+    justify-content:flex-end;
+
+    margin-bottom:18px;
+}
+
+/* =====================================================
+STATUS
+===================================================== */
+
+.status{
+
+    padding:9px 15px;
+
+    border-radius:10px;
+
+    font-size:12px;
+
+    font-weight:800;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+}
+
+/* ENTRADA */
+
+.entrada{
+
+    background:
+    rgba(0,255,120,0.12);
+
+    color:#38ff9c;
+
+    border:
+    1px solid rgba(0,255,120,0.18);
+}
+
+/* SAÍDA */
+
+.saida{
+
+    background:
+    rgba(255,45,45,0.12);
+
+    color:#ff6262;
+
+    border:
+    1px solid rgba(255,45,45,0.18);
+}
+
+/* AJUSTE */
+
+.ajuste{
+
+    background:
+    rgba(255,208,0,0.12);
+
+    color:#ffd84f;
+
+    border:
+    1px solid rgba(255,208,0,0.18);
+}
+
+.card h2{
+
+    font-size:30px;
+
+    line-height:1.3;
+
+    margin-bottom:22px;
+
+    text-transform:uppercase;
+}
+
+.linha{
+
+    width:100%;
+
+    height:1px;
+
+    background:
+    rgba(255,255,255,0.06);
+
+    margin-bottom:25px;
+}
+
+/* =====================================================
+INFO
+===================================================== */
+
+.info{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+}
+
+.info p{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+    color:#d5dbe6;
+
+    font-size:17px;
+
+    line-height:1.5;
+}
+
+.info strong{
+
+    color:#ff4b4b;
+
+    font-size:15px;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+}
+
+/* =====================================================
+AUTOCOMPLETE
+===================================================== */
+
+.autocomplete-box{
+
+    position:relative;
+}
+
+.autocomplete-list{
+
+    position:absolute;
+
+    top:64px;
+
+    width:100%;
+
+    background:#111827;
+
+    border-radius:14px;
+
+    overflow:hidden;
+
+    z-index:999;
+
+    border:
+    1px solid rgba(255,255,255,0.05);
+}
+
+.autocomplete-item{
+
+    padding:15px;
+
+    cursor:pointer;
+
+    transition:0.2s;
+
+    color:#d8dde7;
+}
+
+.autocomplete-item:hover{
+
+    background:
+    rgba(255,45,45,0.10);
+}
+
+/* =====================================================
+SCROLLBAR
+===================================================== */
+
+::-webkit-scrollbar{
+
+    width:10px;
+}
+
+::-webkit-scrollbar-track{
+
+    background:#0b0f18;
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#7a0000;
+
+    border-radius:20px;
+}
+
+/* =====================================================
+RESPONSIVO
+===================================================== */
+
+@media(max-width:1500px){
+
+    .grid-cards{
+
+        grid-template-columns:
+        repeat(2,1fr);
+    }
+}
+
+@media(max-width:1000px){
+
+    .grid-cards{
+
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:780px){
+
+    .topbar{
+
+        flex-direction:column;
+
+        gap:20px;
+    }
+
+    .titulo-area h1{
+
+        font-size:38px;
+    }
+
+    .titulo-area h1 span{
+
+        font-size:28px;
+    }
+
+    .topbar,
+    .filtros{
+
+        padding:25px;
+    }
+
+    .grid-cards{
+
+        padding:0 25px 25px 25px;
+    }
+
+    .card{
+
+        min-height:auto;
+    }
+}
