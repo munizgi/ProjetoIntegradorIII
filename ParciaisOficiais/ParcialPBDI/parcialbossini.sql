@@ -95,7 +95,6 @@ CALL sp_movimentacao_filtro(
 FETCH ALL FROM cursor_mov;
 COMMIT;
 
-
 -- ======================================================
 -- PROCEDURE ESTATÍSTICA DE MOVIMENTAÇÃO PBDI
 -- ======================================================
@@ -106,9 +105,7 @@ LANGUAGE plpgsql
 AS
 $$
 BEGIN
-
     OPEN p_cursor FOR
-
     SELECT
         dp.descricao_prod,
         SUM(fm.quantidade) AS total_vendido,
@@ -119,6 +116,43 @@ BEGIN
     WHERE fm.id_tipo_mov = 2
     GROUP BY dp.descricao_prod
     ORDER BY total_vendido DESC;
+END;
+$$;
+
+CREATE TABLE log_movimentacao (
+    id_log SERIAL PRIMARY KEY,
+    data_log TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    operacao VARCHAR(20),
+    produto_id INTEGER,
+    quantidade NUMERIC(10,2)
+);
+
+CREATE OR REPLACE FUNCTION fn_log_movimentacao()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+
+    INSERT INTO log_movimentacao(
+        operacao,
+        produto_id,
+        quantidade
+    )
+    VALUES(
+        TG_OP,
+        NEW.id_produto,
+        NEW.quantidade
+    );
+
+    RETURN NEW;
 
 END;
 $$;
+
+CREATE TRIGGER trg_log_movimentacao
+AFTER INSERT
+ON fato_movimentacao
+FOR EACH ROW
+EXECUTE FUNCTION fn_log_movimentacao();
+

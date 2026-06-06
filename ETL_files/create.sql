@@ -100,3 +100,12 @@ WHERE (EXTRACT(YEAR FROM data) = 2026) AND (id_tipo_mov = 2) -- Considerando ape
 GROUP BY ano, semana
 ORDER BY ano, semana;
 
+
+----------------------------------------------------------------------
+SELECT fm.data, fm.id_tipo_mov, fm.quantidade, fm.valor_total,tm.descricao_mov, COUNT (fm.id) AS quantidade
+FROM fato_movimentacao fm JOIN dim_tipo_mov tm ON (tm.id_tipo_mov = fm.id_tipo_mov) 
+WHERE EXTRACT(YEAR FROM fm.data) = 2026 
+AND EXTRACT(WEEK FROM fm.data) BETWEEN 22 AND 25
+AND fm.id_tipo_mov = 2
+GROUP BY quantidade, fm.id_tipo_mov;
+
