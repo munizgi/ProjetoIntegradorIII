@@ -17,6 +17,7 @@ engine = create_engine(
 # =========================================================
 
 def query_db(query, params={}):
+
     with engine.connect() as conn:
 
         result = conn.execute(
@@ -30,51 +31,6 @@ def query_db(query, params={}):
         )
 
     return df.to_dict(orient="records")
-
-# =========================================================
-# PROCEDURE CURSOR
-# =========================================================
-
-def executar_cursor_movimentacao(
-    produto,
-    fornecedor
-):
-
-    with engine.connect() as conn:
-
-        trans = conn.begin()
-
-        conn.execute(text("""
-
-            CALL sp_movimentacao_filtro(
-                :produto,
-                :fornecedor,
-                'cursor_mov'
-            )
-
-        """), {
-
-            "produto": produto,
-            "fornecedor": fornecedor
-
-        })
-
-        result = conn.execute(
-            text(
-                "FETCH ALL FROM cursor_mov"
-            )
-        )
-
-        df = pd.DataFrame(
-            result.fetchall(),
-            columns=result.keys()
-        )
-
-        trans.commit()
-
-    return df.to_dict(
-        orient="records"
-    )
 
 # =========================================================
 # INTERFACE DW
@@ -243,10 +199,7 @@ def home():
 
     """
 
-    dados = executar_cursor_movimentacao(
-    produto,
-    fornecedor
-)
+    dados = query_db(query, params)
 
     # =====================================================
     # KPIs HOME
@@ -312,23 +265,155 @@ def autocomplete_produto():
 @app.route("/dashboard")
 def dashboard():
 
+    # ==========================================
+    # KPIS PRINCIPAIS
+    # ==========================================
+    
     kpis = query_db("""
+
+    SELECT
+
+        COUNT(*) AS total_mov,
+
+        ROUND(
+            SUM(valor_total)
+            FILTER(
+                WHERE id_tipo_mov = 2
+            )::numeric,
+            2
+        ) AS receita,
+
+        COUNT(DISTINCT id_produto)
+        AS produtos
+
+    FROM fato_movimentacao
+
+    """)
+    # ==========================================
+    # FORNECEDORES
+    # ==========================================
+
+    fornecedores = query_db("""
 
         SELECT
 
-            COUNT(*) AS total_mov,
-
-            ROUND(
-                SUM(valor_total)::numeric,
-                2
-            ) AS receita,
-
-            COUNT(DISTINCT id_produto)
-            AS produtos
+            COUNT(DISTINCT id_fornecedor)
+            AS fornecedores
 
         FROM fato_movimentacao
 
     """)
+
+    # ==========================================
+    # ENTRADAS
+    # ==========================================
+
+    entradas = query_db("""
+
+        SELECT
+
+            COUNT(*) AS entradas
+
+        FROM fato_movimentacao
+
+        WHERE id_tipo_mov = 1
+
+    """)
+
+    # ==========================================
+    # SAÍDAS
+    # ==========================================
+
+    saidas = query_db("""
+
+        SELECT
+
+            COUNT(*) AS saidas
+
+        FROM fato_movimentacao
+
+        WHERE id_tipo_mov = 2
+
+    """)
+
+ # ==========================================
+# TICKET MÉDIO
+# ==========================================
+
+    ticket_medio = query_db("""
+
+    SELECT
+
+        ROUND(
+            AVG(valor_total)::numeric,
+            2
+        ) AS ticket
+
+    FROM fato_movimentacao
+
+    WHERE id_tipo_mov = 2
+
+    """)
+    # ==========================================
+    # CATEGORIAS
+    # ==========================================
+
+    categorias = query_db("""
+
+    SELECT
+
+        dp.categoria_prod,
+        ROUND(
+            SUM(fm.valor_total)::numeric,
+            2
+        ) AS total
+
+    FROM fato_movimentacao fm
+
+    JOIN dim_produto dp
+        ON fm.id_produto = dp.id_produto
+
+    GROUP BY dp.categoria_prod
+
+    ORDER BY total DESC
+
+    """)
+    # ==========================================
+    # AJUSTES
+    # ==========================================
+
+    ajustes = query_db("""
+
+        SELECT
+
+            COUNT(*) AS ajustes
+
+        FROM fato_movimentacao
+
+        WHERE id_tipo_mov = 3
+
+    """)
+
+    # ==========================================
+    # TICKET MÉDIO
+    # ==========================================
+
+    ticket_medio = query_db("""
+
+        SELECT
+
+            ROUND(
+                AVG(valor_total)::numeric,
+                2
+            ) AS ticket
+
+        FROM fato_movimentacao
+
+    """)
+
+    # ==========================================
+    # TOP PRODUTOS
+    # ==========================================
 
     top_produtos = query_db("""
 
@@ -352,10 +437,56 @@ def dashboard():
 
     """)
 
+    # ==========================================
+    # FINANCEIRO
+    # ==========================================
+
+    financeiro = query_db("""
+
+        SELECT
+
+            TO_CHAR(
+                data,
+                'DD/MM'
+            ) AS data,
+
+            ROUND(
+                SUM(valor_total)::numeric,
+                2
+            ) AS total
+
+        FROM fato_movimentacao
+
+        GROUP BY data
+
+        ORDER BY MIN(data)
+
+        LIMIT 10
+
+    """)
+
     return render_template(
+
         "dashboard.html",
+
         kpis=kpis,
-        top_produtos=top_produtos
+
+        fornecedores=fornecedores,
+
+        entradas=entradas,
+
+        saidas=saidas,
+
+        ajustes=ajustes,
+
+        ticket_medio=ticket_medio,
+
+        top_produtos=top_produtos,
+
+        financeiro=financeiro,
+        
+        categorias=categorias
+
     )
 
 # =========================================================
@@ -410,6 +541,51 @@ def produto(nome):
     })
 
     return jsonify(dados)
+
+# =========================================================
+# PROCEDURE CURSOR
+# =========================================================
+
+def executar_cursor_movimentacao(
+    produto,
+    fornecedor
+):
+
+    with engine.connect() as conn:
+
+        trans = conn.begin()
+
+        conn.execute(text("""
+
+            CALL sp_movimentacao_filtro(
+                :produto,
+                :fornecedor,
+                'cursor_mov'
+            )
+
+        """), {
+
+            "produto": produto,
+            "fornecedor": fornecedor
+
+        })
+
+        result = conn.execute(
+            text(
+                "FETCH ALL FROM cursor_mov"
+            )
+        )
+
+        df = pd.DataFrame(
+            result.fetchall(),
+            columns=result.keys()
+        )
+
+        trans.commit()
+
+    return df.to_dict(
+        orient="records"
+    )
 
 # =========================================================
 # START

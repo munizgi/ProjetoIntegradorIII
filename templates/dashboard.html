@@ -1,172 +1,552 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
+
 <head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Dashboard BI</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <link rel="stylesheet" href="/static/style.css">
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 
 </head>
 
-<body>
+<body class="bi-dashboard-body">
 
-<div class="topo">
+<div class="bi-wrapper">
 
-    <h1>DASHBOARD BI</h1>
+    <!-- HEADER -->
 
-    <a href="/">
-        Interface DW
-    </a>
+    <div class="bi-header">
 
-</div>
+        <div>
 
-<div class="x">
-    <div class="kpis">
+            <small>
+                MFIX • BUSINESS INTELLIGENCE
+            </small>
 
-        <div class="kpi">
-            <h2>{{ kpis[0].total_mov }}</h2>
-            <p>Movimentações</p>
+            <h1>
+                DASHBOARD
+                <span>MFIX</span>
+            </h1>
+
+            <p>
+                Central analítica operacional e estratégica
+            </p>
+
         </div>
 
-        <div class="kpi">
-            <h2>R$ {{ kpis[0].receita }}</h2>
-            <p>Receita</p>
+        <a
+            href="/"
+            class="bi-btn"
+        >
+            INTERFACE DW
+        </a>
+
+    </div>
+
+    <!-- KPIS -->
+
+    <div class="bi-kpis">
+
+        <div class="bi-kpi-card">
+
+            <span>MOVIMENTAÇÕES</span>
+
+            <h2>
+                {{ kpis[0].total_mov }}
+            </h2>
+
         </div>
 
-        <div class="kpi">
-            <h2>{{ kpis[0].produtos }}</h2>
-            <p>Produtos</p>
+        <div class="bi-kpi-card">
+
+            <span>FATURAMENTO: ÚLTIMOS 2 ANOS </span>
+
+            <h2>
+
+                R$
+                {{
+                    "{:,.2f}".format(
+                        kpis[0].receita
+                    ).replace(",", "X")
+                    .replace(".", ",")
+                    .replace("X", ".")
+                }}
+
+            </h2>
+
+        </div>
+
+        <div class="bi-kpi-card">
+
+            <span>PRODUTOS ATIVOS</span>
+
+            <h2>
+                {{ kpis[0].produtos }}
+            </h2>
+
+        </div>
+
+        <div class="bi-kpi-card">
+
+            <span>FORNECEDORES</span>
+
+            <h2>
+                {{ fornecedores[0].fornecedores }}
+            </h2>
+
+        </div>
+
+        <div class="bi-kpi-card">
+
+            <span>TICKET MÉDIO SAÍDAS</span>
+
+            <h2>
+
+                R$
+                {{
+                    "{:,.2f}".format(
+                        ticket_medio[0].ticket
+                    ).replace(",", "X")
+                    .replace(".", ",")
+                    .replace("X", ".")
+                }}
+
+            </h2>
+
+        </div>
+        <div class="bi-kpi-card entrada-card">
+
+            <span>ENTRADAS</span>
+
+            <h2>
+                {{ entradas[0].entradas }}
+            </h2>
+
+        </div>
+
+        <div class="bi-kpi-card saida-card">
+
+            <span>SAÍDAS</span>
+
+            <h2>
+                {{ saidas[0].saidas }}
+            </h2>
+
+        </div>
+
+        <div class="bi-kpi-card ajuste-card">
+
+            <span>AJUSTES</span>
+
+            <h2>
+                {{ ajustes[0].ajustes }}
+            </h2>
+
         </div>
 
     </div>
-</div>
 
-<div class="quadradinho">
-    <div class="grafico">
+    <!-- GRID -->
 
-        <canvas id="graficoProdutos"></canvas>
+    <div class="bi-grid">
+
+        <!-- ESQUERDA -->
+
+        <div class="bi-left">
+
+            <!-- FINANCEIRO -->
+
+            <div class="bi-chart-card big-card">
+
+                <div class="chart-top">
+
+                    <div>
+
+                        <h3>
+                            Evolução Financeira
+                        </h3>
+
+                        <p>
+                            Receita operacional ao longo do tempo
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="canvas-box">
+
+                    <canvas id="graficoFinanceiro"></canvas>
+
+                </div>
+
+            </div>
+
+            <!-- RECEITA POR CATEGORIA -->
+
+            <div class="bi-chart-card">
+
+                <div class="chart-top">
+
+                    <div>
+
+                        <h3>
+                            Receita por Categoria
+                        </h3>
+
+                        <p>
+                            Categorias com maior valor financeiro
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="canvas-box">
+
+                    <canvas id="graficoCategoria"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- DIREITA -->
+
+        <div class="bi-right">
+
+            <!-- DONUT -->
+
+            <div class="bi-chart-card">
+
+                <div class="chart-top">
+
+                    <div>
+
+                        <h3>
+                            Movimentações
+                        </h3>
+
+                        <p>
+                            Distribuição operacional
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="canvas-box donut-box">
+
+                    <canvas id="graficoMov"></canvas>
+
+                </div>
+
+            </div>
+
+            <!-- RANKING -->
+
+            <div class="bi-chart-card">
+
+                <div class="chart-top">
+
+                    <div>
+
+                        <h3>
+                            Ranking Produtos
+                        </h3>
+
+                        <p>
+                            Produtos mais movimentados
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="ranking-list">
+
+                    {% for p in top_produtos %}
+
+                    <div class="ranking-item">
+
+                        <strong>
+                            {{ p.descricao_prod }}
+                        </strong>
+
+                        <span>
+                            {{ p.total }}
+                        </span>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
-</div>
-
-
-<div class="lista">
-
-<h2>TOP 5 PRODUTOS</h2>
-
-{% for p in top_produtos %}
-
-<div class="produto"
-     onclick="abrirModal('{{p.descricao_prod}}')">
-
-    {{ p.descricao_prod }}
-    - {{ p.total }}
 
 </div>
 
-{% endfor %}
+<script>
 
-</div>
+const financeiro =
+{{ financeiro | tojson | safe }};
 
+const categorias =
+{{ categorias | tojson | safe }};
 
-<div id="modal" class="modal">
+console.log(categorias);
 
-<div class="modal-content">
+const movimentacoes = [
 
-<span class="fechar"
-      onclick="fecharModal()">
+    {{ entradas[0].entradas }},
+    {{ saidas[0].saidas }},
+    {{ ajustes[0].ajustes }}
 
-X
+];
 
-</span>
-
-<div id="conteudoModal"></div>
-
-</div>
-
-</div>
-
-<script type="">
-
-const produtos = {{ top_produtos|tojson }};
+/* FINANCEIRO */
 
 new Chart(
-document.getElementById('graficoProdutos'),
-{
-    type: 'bar',
 
-    data: {
+    document.getElementById(
+        'graficoFinanceiro'
+    ),
 
-        labels: produtos.map(p => p.descricao_prod),
+    {
 
-        datasets: [{
-            label: 'Quantidade',
-            data: produtos.map(p => p.total)
-        }]
+        type:'line',
+
+        data:{
+
+            labels:
+            financeiro.map(
+                item => item.data
+            ),
+
+            datasets:[{
+
+                label:'Receita',
+
+                data:
+                financeiro.map(
+                    item => item.total
+                ),
+
+                borderColor:'#ff2d2d',
+
+                backgroundColor:
+                'rgba(255,45,45,0.12)',
+
+                fill:true,
+
+                tension:0.4,
+
+                pointRadius:4,
+
+                pointBackgroundColor:'#ff2d2d'
+            }]
+        },
+
+        options:{
+
+            responsive:true,
+
+            maintainAspectRatio:false,
+
+            interaction:{
+                intersect:false,
+                mode:'index'
+            },
+
+            plugins:{
+                legend:{
+                    labels:{
+                        color:'white'
+                    }
+                }
+            },
+
+            scales:{
+
+                x:{
+                    ticks:{
+                        color:'#9aa4b5'
+                    },
+
+                    grid:{
+                        color:'rgba(255,255,255,0.03)'
+                    }
+                },
+
+                y:{
+                    ticks:{
+                        color:'#9aa4b5'
+                    },
+
+                    grid:{
+                        color:'rgba(255,255,255,0.03)'
+                    }
+                }
+            }
+        }
     }
-}
 );
 
+/* CATEGORIAS */
 
-async function abrirModal(nome){
+new Chart(
 
-    const resposta =
-    await fetch(`/produto/${nome}`);
+    document.getElementById(
+        'graficoCategoria'
+    ),
 
-    const dados =
-    await resposta.json();
+    {
 
-    let html = "";
+        type:'bar',
 
-    dados.forEach(d => {
+        data:{
 
-        html += `
+            labels:
+            categorias.map(
+                item => item.categoria_prod
+            ),
 
-        <div class="detalhe">
+            datasets:[{
 
-            <h2>${d.descricao_prod}</h2>
+                label:'Receita',
 
-            <p><b>Fornecedor:</b> ${d.nome_forn}</p>
+                data:
+                categorias.map(
+                    item => item.total
+                ),
 
-            <p><b>Lote:</b> ${d.numero_lote}</p>
+                backgroundColor:[
 
-            <p><b>Validade:</b> ${d.data_validade_lote}</p>
+                    '#ff2d2d',
+                    '#ff5252',
+                    '#ff7b7b',
+                    '#ff9f9f'
+                ],
 
-            <p><b>Mov:</b> ${d.descricao_mov}</p>
+                borderRadius:12
+            }]
+        },
 
-            <p><b>Quantidade:</b> ${d.quantidade}</p>
+        options:{
 
-            <p><b>Receita:</b> ${d.valor_total}</p>
+            responsive:true,
 
-            <p><b>Transportadora:</b> ${d.nome_transp}</p>
+            maintainAspectRatio:false,
 
-            <p><b>Data:</b> ${d.data}</p>
+            plugins:{
+                legend:{
+                    labels:{
+                        color:'white'
+                    }
+                }
+            },
 
-        </div>
+            scales:{
 
-        <hr>
-        `
-    });
+                x:{
+                    ticks:{
+                        color:'#9aa4b5'
+                    },
 
-    document
-    .getElementById("conteudoModal")
-    .innerHTML = html;
+                    grid:{
+                        display:false
+                    }
+                },
 
-    document
-    .getElementById("modal")
-    .style.display = "block";
-}
+                y:{
+                    ticks:{
+                        color:'#9aa4b5'
+                    },
 
+                    grid:{
+                        color:'rgba(255,255,255,0.03)'
+                    }
+                }
+            }
+        }
+    }
+);
 
-function fecharModal(){
+/* DONUT */
 
-    document
-    .getElementById("modal")
-    .style.display = "none";
-}
+new Chart(
+
+    document.getElementById(
+        'graficoMov'
+    ),
+
+    {
+
+        type:'doughnut',
+
+        data:{
+
+            labels:[
+                'Entradas',
+                'Saídas',
+                'Ajustes'
+            ],
+
+            datasets:[{
+
+                data:movimentacoes,
+
+                backgroundColor:[
+
+                    '#37ff9c',
+                    '#ff4d4d',
+                    '#ffd84f'
+                ],
+
+                borderWidth:0
+            }]
+        },
+
+        options:{
+
+            responsive:true,
+
+            maintainAspectRatio:false,
+
+            cutout:'72%',
+
+            plugins:{
+                legend:{
+                    position:'bottom',
+
+                    labels:{
+                        color:'white'
+                    }
+                }
+            }
+        }
+    }
+);
 
 </script>
+
 </body>
 </html>
