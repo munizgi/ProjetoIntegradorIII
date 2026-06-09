@@ -28,7 +28,9 @@ df_fornecedor = df_fornecedor.rename(columns={
     'CNPJ': 'cnpj_forn',
     'CIDADE': 'cidade_forn',
     'ESTADO': 'uf_forn'
-}) ### a sintaxe do columns recebe um dicionario, com sua 'chave' sendo nome originário sheet, e seu valor o nome da database
+}) 
+
+### a sintaxe do columns recebe um dicionario, com sua 'chave' sendo nome originário sheet, e seu valor o nome da database
 
 df_produto = df_produto.rename(columns={
     'DESCRICAO':        'descricao_prod',
@@ -74,7 +76,7 @@ df_mov      ['data'] =          pd.to_datetime(df_mov    ['data'],         error
 ##### tratamento de data 
 
 for coluna in ['data_saida', 'data_entrada']:
-    # 1. Tenta converter o que for possível para número (os 45698 da vida)
+    # 1. Tenta converter o que for possível para número
     valores_numericos = pd.to_numeric(df_produto[coluna], errors='coerce')
     
     # 2. Cria uma máscara para saber onde temos números reais
@@ -88,7 +90,7 @@ for coluna in ['data_saida', 'data_entrada']:
         errors='coerce'
     )
     
-    # 4. Onde NÃO era número (já era data em texto), tenta converter direto
+    # 4. Onde NÃO era número, tenta converter direto
     df_produto.loc[~mask_num, coluna] = pd.to_datetime(
         df_produto.loc[~mask_num, coluna],
         errors='coerce'

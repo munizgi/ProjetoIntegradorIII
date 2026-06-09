@@ -1,64 +1,66 @@
-from flask import Flask, render_template, request, jsonify
-from sqlalchemy import create_engine, text
-import pandas as pd
-from prophet import Prophet
+
+
+from flask import Flask, render_template, request, jsonify  # importa flask e funções usadas nas rotas e respostas
+from sqlalchemy import create_engine, text  # importa conexão sql e textos sql parametrizados
+import pandas as pd  # importa pandas para transformar resultados em dataframe
+from prophet import Prophet  # importa prophet para previsão temporal na área de ia
 
 app = Flask(__name__)
 
 # =========================================================
-# CONEXÃO
+# conexão
 # =========================================================
 
-engine = create_engine(
+engine = create_engine(  # cria o motor de conexão com o postgresql
     "postgresql+psycopg2://postgres:753614@localhost:5432/relacionalMFIX"
 )
 
 # =========================================================
-# QUERY PADRÃO
+# query padrão
 # =========================================================
 
-def query_db(query, params={}):
+def query_db(query, params={}):  # cria função padrão para executar selects e devolver lista de dicionários
 
-    with engine.connect() as conn:
+    with engine.connect() as conn:  # abre conexão temporária com o banco
 
-        result = conn.execute(
-            text(query),
-            params
+        result = conn.execute(  # executa a consulta sql usando parâmetros seguros
+            text(query),  # converte a string sql para objeto executável pelo sqlalchemy
+            params  # envia os parâmetros usados nos filtros
         )
 
-        df = pd.DataFrame(
-            result.fetchall(),
-            columns=result.keys()
+        df = pd.DataFrame(  # monta um dataframe com as linhas retornadas
+            result.fetchall(),  # pega todas as linhas retornadas pelo banco
+            columns=result.keys()  # usa os nomes das colunas vindos da consulta
         )
 
-    return df.to_dict(orient="records")
+    return df.to_dict(orient="records")  # converte o dataframe para lista de dicionários usada pelo html
 
 # =========================================================
-# INTERFACE DW
+# interface dw
 # =========================================================
 
-@app.route("/", methods=["GET", "POST"])
-def home():
+@app.route("/", methods=["GET", "POST"]) 
+def home():  # controla a tela inicial com filtros e kpis
 
-    produto = request.form.get(
-        "produto", ""
-    ).strip()
+    produto = request.form.get( 
+        "produto", ""  
+    ).strip()  
 
-    fornecedor = request.form.get(
-        "fornecedor", ""
-    ).strip()
+    fornecedor = request.form.get( 
+        "fornecedor", "" 
+    ).strip()  
 
-    movimentacao = request.form.get(
-        "movimentacao", ""
-    ).strip()
+    movimentacao = request.form.get( 
+        "movimentacao", ""  
+    ).strip()  
 
-    data_inicial = request.form.get(
-        "data_inicial", ""
-    ).strip()
+    data_inicial = request.form.get(  
+        "data_inicial", ""  
+    ).strip()  
 
-    data_final = request.form.get(
-        "data_final", ""
-    ).strip()
+    data_final = request.form.get(  
+        "data_final", ""  
+    ).strip()  
 
     query = """
 
@@ -123,40 +125,10 @@ def home():
     params = {}
 
     # =====================================================
-    # PRODUTO
+    # movimentação
     # =====================================================
 
-    if produto != "":
-
-        query += """
-
-            AND LOWER(dp.descricao_prod)
-            LIKE LOWER(:produto)
-
-        """
-
-        params["produto"] = f"%{produto}%"
-
-    # =====================================================
-    # FORNECEDOR
-    # =====================================================
-
-    if fornecedor != "":
-
-        query += """
-
-            AND LOWER(df.nome_forn)
-            LIKE LOWER(:fornecedor)
-
-        """
-
-        params["fornecedor"] = f"%{fornecedor}%"
-
-    # =====================================================
-    # MOVIMENTAÇÃO
-    # =====================================================
-
-    if movimentacao != "":
+    if movimentacao != "":  # verifica se o usuário selecionou uma movimentação
 
         query += """
 
@@ -168,10 +140,10 @@ def home():
         params["movimentacao"] = str(movimentacao)
 
    # =====================================================
-    # DATA INICIAL
+    # data inicial
     # =====================================================
 
-    if data_inicial != "":
+    if data_inicial != "":  # verifica se o usuário informou data inicial
 
         query += """
 
@@ -182,10 +154,10 @@ def home():
         params["data_inicial"] = data_inicial
 
     # =====================================================
-    # DATA FINAL
+    # data final
     # =====================================================
 
-    if data_final != "":
+    if data_final != "":  # verifica se o usuário informou data final
 
         query += """
 
@@ -203,15 +175,13 @@ def home():
 
     """
 
-    dados = query_db(query, params)
+    dados = query_db(query, params)  # consulta dados que serão exibidos no modal
     
-
-
     # =====================================================
-    # KPIs HOME
+    # kpis home
     # =====================================================
-
-    kpis = query_db("""
+    # consulta indicadores rápidos da tela inicial
+    kpis = query_db("""  
 
         SELECT
 
@@ -229,22 +199,22 @@ def home():
 
     """)
 
-    return render_template(
-        "index.html",
-        dados=dados,
-        kpis=kpis
+    return render_template(  # renderiza a página html com os dados calculados
+        "index.html",  # informa qual template será exibido
+        dados=dados,  # manda os registros da tabela para o html
+        kpis=kpis  # manda os indicadores para o html
     )
 
 # =========================================================
-# AUTOCOMPLETE
+# autocomplete
 # =========================================================
 
-@app.route("/autocomplete_produto")
-def autocomplete_produto():
+@app.route("/autocomplete_produto")  # define rota usada pelo autocomplete de produto
+def autocomplete_produto():  # busca sugestões de produtos conforme o usuário digita
 
-    termo = request.args.get("term", "")
-
-    produtos = query_db("""
+    termo = request.args.get("term", "")  # pega o termo digitado na busca do autocomplete
+    # consulta produtos parecidos com o termo digitado
+    produtos = query_db("""  
 
         SELECT DISTINCT descricao_prod
 
@@ -263,20 +233,20 @@ def autocomplete_produto():
 
     })
 
-    return jsonify(produtos)
+    return jsonify(produtos)  # devolve as sugestões em json para o frontend
 
 # =========================================================
-# DASHBOARD
+# dashboard
 # =========================================================
 
-@app.route("/dashboard")
-def dashboard():
+@app.route("/dashboard")  # define a rota do dashboard gerencial
+def dashboard():  # monta os indicadores e gráficos do dashboard
 
     # ==========================================
-    # KPIS PRINCIPAIS
+    # kpis principais
     # ==========================================
     
-    kpis = query_db("""
+    kpis = query_db("""  
 
     SELECT
 
@@ -299,10 +269,10 @@ def dashboard():
 
 """)
     # ==========================================
-    # FORNECEDORES
+    # fornecedores
     # ==========================================
 
-    fornecedores = query_db("""
+    fornecedores = query_db("""  
 
        SELECT
             COUNT(DISTINCT id_fornecedor)
@@ -315,10 +285,10 @@ def dashboard():
     """)
 
     # ==========================================
-    # ENTRADAS
+    # entradas
     # ==========================================
 
-    entradas = query_db("""
+    entradas = query_db("""  
 
       SELECT
         COUNT(*) AS entradas
@@ -329,10 +299,10 @@ def dashboard():
     """)
 
     # ==========================================
-    # SAÍDAS
+    # saídas
     # ==========================================
 
-    saidas = query_db("""
+    saidas = query_db("""  
 
        SELECT
         COUNT(*) AS saidas
@@ -343,7 +313,7 @@ def dashboard():
     """)
 
  # ==========================================
-# TICKET MÉDIO
+# ticket médio
 # ==========================================
 
     ticket_medio = query_db("""
@@ -362,10 +332,10 @@ def dashboard():
 
     """)
     # ==========================================
-    # CATEGORIAS
+    # categorias
     # ==========================================
 
-    categorias = query_db("""
+    categorias = query_db(""" 
 
     SELECT
 
@@ -389,10 +359,10 @@ def dashboard():
 
     """)
     # ==========================================
-    # AJUSTES
+    # ajustes
     # ==========================================
 
-    ajustes = query_db("""
+    ajustes = query_db("""  
 
         SELECT
         COUNT(*) AS ajustes
@@ -403,10 +373,10 @@ def dashboard():
     """)
 
     # ==========================================
-    # TOP PRODUTOS
+    # top produtos
     # ==========================================
-
-    top_produtos = query_db("""
+    # busca os cinco produtos mais vendidos em quantidade
+    top_produtos = query_db("""  
 
         SELECT
 
@@ -432,10 +402,10 @@ def dashboard():
     """)
 
     # ==========================================
-    # FINANCEIRO
+    # financeiro
     # ==========================================
-
-    financeiro = query_db("""
+     # calcula evolução mensal do faturamento
+    financeiro = query_db(""" 
 
        SELECT
             TO_CHAR(data, 'MM/YYYY') AS data,
@@ -458,9 +428,10 @@ def dashboard():
     """)
 
     # ==========================================
-    # CRESCIMENTO
+    # crescimento
     # ==========================================
-    crescimento = query_db("""
+    # calcula crescimento percentual entre janeiro e dezembro
+    crescimento = query_db("""  
 
          SELECT
     ROUND(
@@ -502,40 +473,39 @@ AND data >= CURRENT_DATE - INTERVAL '2 years'
 
             """)
 #------------------------------------------------------#
-    return render_template(
+    return render_template(  # renderiza a página html com os dados calculados
 
-        "dashboard.html",
+        "dashboard.html",  # informa qual template do dashboard será exibido
 
-        kpis=kpis,
+        kpis=kpis,  # manda os indicadores para o html
 
-        fornecedores=fornecedores,
+        fornecedores=fornecedores,  # manda o indicador de fornecedores para o template
 
-        entradas=entradas,
+        entradas=entradas,  # manda o total de entradas para o template
 
-        saidas=saidas,
+        saidas=saidas,  # manda o total de saídas para o template
 
-        ajustes=ajustes,
+        ajustes=ajustes,  # manda o total de ajustes para o template
 
-        ticket_medio=ticket_medio,
+        ticket_medio=ticket_medio,  # manda o ticket médio para o template
 
-        top_produtos=top_produtos,
+        top_produtos=top_produtos,  # manda o ranking de produtos para o template
 
-        financeiro=financeiro,
+        financeiro=financeiro,  # manda a série mensal financeira para o template
         
-        categorias=categorias,
+        categorias=categorias,  # manda o total por categoria para o template
         
-        crescimento=crescimento
-
+        crescimento=crescimento  # manda o percentual de crescimento para o template
 
     )
     # ==========================================
-    # IA
+    # ia
     # ==========================================
 
-@app.route("/ia")
-def ia():
-        
-        df_ia = pd.read_sql("""
+@app.route("/ia")  # define a rota da análise preditiva
+def ia():  # executa estatística e previsão de faturamento
+        # lê dados de saída direto do banco para análise
+        df_ia = pd.read_sql("""  
 
             SELECT
                 data,
@@ -547,47 +517,47 @@ def ia():
 
         """, engine)
 
-        df_ia["data"] = pd.to_datetime(
+        df_ia["data"] = pd.to_datetime(  # converte a coluna de data para formato temporal
             df_ia["data"]
         )
 
-        dados_diarios = (
+        dados_diarios = (  # agrupa o faturamento por dia
 
-            df_ia.groupby("data")["valor_total"]
-            .sum()
-            .reset_index()
+            df_ia.groupby("data")["valor_total"]  # soma valor total por data
+            .sum()  # soma o faturamento diário
+            .reset_index()  # reorganiza o índice após o agrupamento
 
         )
 
-        # COM OUTLIERS
+        # com outliers
 
-        media_preco = round(
+        media_preco = round(  # calcula a média com outliers
                 dados_diarios["valor_total"].mean(),
                 2
             )
 
-        mediana_preco = round(
+        mediana_preco = round(  # calcula a mediana com outliers
                 dados_diarios["valor_total"].median(),
                 2
             )
 
-        desvio_padrao = round(
+        desvio_padrao = round(  # calcula o desvio padrão com outliers
                 dados_diarios["valor_total"].std(),
                 2
             )
 
-        Q1 = dados_diarios["valor_total"].quantile(0.25)
+        Q1 = dados_diarios["valor_total"].quantile(0.25)  # calcula o primeiro quartil para detectar outliers
 
-        Q3 = dados_diarios["valor_total"].quantile(0.75)
+        Q3 = dados_diarios["valor_total"].quantile(0.75)  # calcula o terceiro quartil para detectar outliers
 
-        IQR = Q3 - Q1
+        IQR = Q3 - Q1  # calcula a amplitude interquartil
 
-        limite_inferior = Q1 - (1.5 * IQR)
+        limite_inferior = Q1 - (1.5 * IQR)  # define limite inferior para outliers
 
-        limite_superior = Q3 + (1.5 * IQR)
+        limite_superior = Q3 + (1.5 * IQR)  # define limite superior para outliers
 
 
-        prophet_df = dados_diarios.rename(
+        prophet_df = dados_diarios.rename(  # prepara dataframe no formato exigido pelo prophet
             columns={
                 "data": "ds",
                 "valor_total": "y"
@@ -595,47 +565,47 @@ def ia():
         )
 
 
-        modelo = Prophet(
-            daily_seasonality=True,
-            weekly_seasonality=True,
-            yearly_seasonality=False
+        modelo = Prophet(  # cria o modelo de previsão temporal
+            daily_seasonality=True,  # ativa sazonalidade diária
+            weekly_seasonality=True,  # ativa sazonalidade semanal
+            yearly_seasonality=False  # desativa sazonalidade anual
         )
 
-        modelo.fit(prophet_df)
+        modelo.fit(prophet_df)  # treina o modelo prophet com dados históricos
 
 
-        future = modelo.make_future_dataframe(
-            periods=56
+        future = modelo.make_future_dataframe(  # cria datas futuras para previsão
+            periods=56  # define previsão para 56 dias, equivalente a 8 semanas
         )
 
-        forecast = modelo.predict(future)
+        forecast = modelo.predict(future)  # gera as previsões futuras
 
-        previsao_8_semanas = forecast.tail(56)
+        previsao_8_semanas = forecast.tail(56)  # separa somente as próximas 8 semanas previstas
 
-        media_futura = round(
+        media_futura = round(  # calcula média prevista para o futuro
             previsao_8_semanas["yhat"].mean(),
             2
         )
 
-        maximo_previsto = round(
+        maximo_previsto = round(  # calcula maior valor previsto
             previsao_8_semanas["yhat"].max(),
             2
         )
 
-        minimo_previsto = round(
+        minimo_previsto = round(  # calcula menor valor previsto
             previsao_8_semanas["yhat"].min(),
             2
         )
 
 
-        if media_futura > media_preco:
-            tendencia = "CRESCIMENTO"
-        elif media_futura < media_preco:
-            tendencia = "QUEDA"
-        else:
-            tendencia = "ESTÁVEL"
+        if media_futura > media_preco:  # compara previsão com média histórica
+            tendencia = "CRESCIMENTO"  # define a tendência textual exibida na tela
+        elif media_futura < media_preco:  # verifica cenário de queda
+            tendencia = "QUEDA"  # define a tendência textual exibida na tela
+        else:  # trata cenário sem alta ou queda
+            tendencia = "ESTÁVEL"  # define a tendência textual exibida na tela
 
-        insight = f"""
+        insight = f"""  
                 A previsão para as próximas 8 semanas
                 indica faturamento médio estimado de
                 R$ {str(f"{media_futura:,.2f}").replace(',', 'X').replace('.', ',').replace('X', '.')}.
@@ -650,7 +620,7 @@ def ia():
                 """
 
 
-        outliers = dados_diarios[
+        outliers = dados_diarios[  # filtra registros considerados outliers
 
             (
                 dados_diarios["valor_total"]
@@ -666,7 +636,7 @@ def ia():
 
         ]
 
-        dados_sem_outliers = dados_diarios[
+        dados_sem_outliers = dados_diarios[  # mantém apenas dados dentro dos limites estatísticos
 
             (
                 dados_diarios["valor_total"]
@@ -682,65 +652,65 @@ def ia():
 
         ]
 
-                # SEM OUTLIERS
+                # sem outliers
 
-        media_limpa = round(
+        media_limpa = round(  # calcula média sem outliers
             dados_sem_outliers["valor_total"].mean(),
             2
         )
 
-        mediana_limpa = round(
+        mediana_limpa = round(  # calcula mediana sem outliers
             dados_sem_outliers["valor_total"].median(),
             2
         )
 
-        desvio_limpo = round(
+        desvio_limpo = round(  # calcula desvio padrão sem outliers
             dados_sem_outliers["valor_total"].std(),
             2
         )
 
-        return render_template(
+        return render_template(  # renderiza a página html com os dados calculados
 
-            "ia.html",
+            "ia.html",  # informa qual template da ia será exibido
 
-            media=media_preco,
+            media=media_preco,  # manda a média original para o template
 
-            mediana=mediana_preco,
+            mediana=mediana_preco,  # manda a mediana original para o template
 
-            desvio=desvio_padrao,
+            desvio=desvio_padrao,  # manda o desvio original para o template
 
-            media_limpa=media_limpa,
-            mediana_limpa=mediana_limpa,
-            desvio_limpo=desvio_limpo,
+            media_limpa=media_limpa,  # manda média sem outliers para o template
+            mediana_limpa=mediana_limpa,  # manda mediana sem outliers para o template
+            desvio_limpo=desvio_limpo,  # manda desvio sem outliers para o template
 
-            qtd_outliers=len(outliers),
+            qtd_outliers=len(outliers),  # manda quantidade de outliers encontrados
 
-            dados_ia=dados_diarios.to_dict(
+            dados_ia=dados_diarios.to_dict(  # manda dados originais agregados para gráficos
                 orient="records"
             ),
 
-            dados_limpos=dados_sem_outliers.to_dict(
+            dados_limpos=dados_sem_outliers.to_dict(  # manda dados limpos para gráficos
                 orient="records"
             ),
-             previsao=previsao_8_semanas.to_dict(
+             previsao=previsao_8_semanas.to_dict(  # manda previsão de 8 semanas para gráficos
                 orient="records"
             ),
                     
-            media_futura=media_futura,
-            maximo_previsto=maximo_previsto,
-            minimo_previsto=minimo_previsto,
-            tendencia=tendencia,
-            insight=insight
+            media_futura=media_futura,  # manda média prevista para o template
+            maximo_previsto=maximo_previsto,  # manda máximo previsto para o template
+            minimo_previsto=minimo_previsto,  # manda mínimo previsto para o template
+            tendencia=tendencia,  # manda tendência calculada para o template
+            insight=insight  # manda texto interpretativo para o template
 
         )
 # =========================================================
-# MODAL PRODUTO
+# modal produto
 # =========================================================
 
-@app.route("/produto/<nome>")
-def produto(nome):
-
-    dados = query_db("""
+@app.route("/produto/<nome>")  # define rota do modal de detalhes do produto
+def produto(nome):  # busca movimentações específicas de um produto
+# consulta dados que serão exibidos no modal
+    dados = query_db("""  
 
         SELECT
 
@@ -783,24 +753,24 @@ def produto(nome):
 
     """, {
 
-        "nome": nome
+        "nome": nome  # envia o nome do produto como parâmetro seguro
 
     })
 
-    return jsonify(dados)
+    return jsonify(dados)  # devolve os detalhes do produto em json
 
 # =========================================================
-# PROCEDURE CURSOR
+# procedure cursor para fazer filtros
 # =========================================================
 
-def executar_cursor_movimentacao(
-    produto,
+def executar_cursor_movimentacao(  # função python responsável por chamar a procedure com cursor
+    produto,  # envia este filtro para a função de cursor
     fornecedor
 ):
 
-    with engine.connect() as conn:
+    with engine.connect() as conn:  # abre conexão temporária com o banco
 
-        trans = conn.begin()
+        trans = conn.begin()  # abre transação exigida para trabalhar com cursor
 
         conn.execute(text("""
 
@@ -812,31 +782,31 @@ def executar_cursor_movimentacao(
 
         """), {
 
-            "produto": produto,
-            "fornecedor": fornecedor
+            "produto": produto,  # envia produto para a procedure
+            "fornecedor": fornecedor  # envia fornecedor para a procedure
 
         })
 
-        result = conn.execute(
+        result = conn.execute(  # executa a consulta sql usando parâmetros seguros
             text(
                 "FETCH ALL FROM cursor_mov"
             )
         )
 
-        df = pd.DataFrame(
-            result.fetchall(),
-            columns=result.keys()
+        df = pd.DataFrame(  # monta um dataframe com as linhas retornadas
+            result.fetchall(),  # pega todas as linhas retornadas pelo banco
+            columns=result.keys()  # usa os nomes das colunas vindos da consulta
         )
 
-        trans.commit()
+        trans.commit()  # confirma a transação após buscar os dados
 
-    return df.to_dict(
+    return df.to_dict(  # converte o dataframe para lista de dicionários usada pelo html
         orient="records"
     )
 
 # =========================================================
-# START
+# start
 # =========================================================
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == "__main__":  # garante que o flask rode só quando o arquivo for executado direto
+    app.run(debug=True)  # inicia o servidor flask em modo debug
