@@ -88,3 +88,31 @@ SELECT
 FROM mov_estoque m;
 
 
+BEGIN;
+
+UPDATE mov_estoque me
+SET preco_venda = p.preco_venda
+FROM produto p
+WHERE me.produto_id = p.id
+  AND p.preco_venda > 500;
+
+TRUNCATE TABLE fato_movimentacao;
+
+INSERT INTO fato_movimentacao
+SELECT
+    m.produto_id,
+    m.data,
+    m.tipo_mov_id,
+    m.fornecedor_id,
+    m.transportadora_id,
+    m.lote_id,
+    m.qtde_prod,
+    (m.qtde_prod * COALESCE(m.preco_venda, 0))
+FROM mov_estoque m;
+
+COMMIT;
+
+SELECT
+    MAX(quantidade) AS maior_qtd,
+    MAX(valor_total) AS maior_valor
+FROM fato_movimentacao;

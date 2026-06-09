@@ -90,3 +90,29 @@ SELECT * FROM tipo_mov
 
 SELECT  id_produto, descricao_prod, categoria_prod FROM dim_produto;
 
+UPDATE mov_estoque me
+SET qtde_prod = FLOOR(RANDOM() * 20 + 1)
+FROM produto p
+WHERE me.produto_id = p.id
+  AND p.preco_venda > 500;
+
+UPDATE mov_estoque me
+SET preco_venda = p.preco_venda
+FROM produto p
+WHERE me.produto_id = p.id
+  AND p.preco_venda > 500;
+
+  UPDATE mov_estoque me
+SET
+    qtde_prod = FLOOR(RANDOM() * 20 + 1),
+    preco_venda = p.preco_venda
+FROM produto p
+WHERE me.produto_id = p.id
+  AND p.preco_venda > 500;
+
+UPDATE mov_estoque me
+SET qtde_prod = FLOOR(RANDOM() * 200 + 1)
+FROM produto p
+WHERE me.produto_id = p.id
+  AND p.preco_venda > 500
+  AND me.qtde_prod > 20;
