@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from sqlalchemy import create_engine, text
 import pandas as pd
+from prophet import Prophet
 
 app = Flask(__name__)
 
@@ -81,7 +82,10 @@ def home():
             fm.quantidade,
             fm.valor_total,
 
-            fm.data,
+            TO_CHAR(
+                fm.data,
+                'DD/MM/YYYY'
+            ) AS data,
 
             (
 
@@ -163,7 +167,7 @@ def home():
 
         params["movimentacao"] = str(movimentacao)
 
-    # =====================================================
+   # =====================================================
     # DATA INICIAL
     # =====================================================
 
@@ -171,7 +175,7 @@ def home():
 
         query += """
 
-            AND fm.data >= :data_inicial
+            AND fm.data <= CAST(:data_final AS DATE)
 
         """
 
@@ -195,11 +199,13 @@ def home():
 
         ORDER BY fm.data DESC
 
-        LIMIT 50
+        LIMIT 200
 
     """
 
     dados = query_db(query, params)
+    
+
 
     # =====================================================
     # KPIs HOME
@@ -215,8 +221,9 @@ def home():
             AS fornecedores,
 
             COUNT(*) FILTER(
-                WHERE id_tipo_mov = 2
-            ) AS movimentacoes_hoje
+        WHERE id_tipo_mov = 2
+        AND data = CURRENT_DATE
+    ) AS movimentacoes_hoje
 
         FROM fato_movimentacao
 
@@ -273,34 +280,37 @@ def dashboard():
 
     SELECT
 
-        COUNT(*) AS total_mov,
+            COUNT(*) AS total_mov,
 
-        ROUND(
-            SUM(valor_total)
-            FILTER(
-                WHERE id_tipo_mov = 2
-            )::numeric,
-            2
-        ) AS receita,
+            ROUND(
+                SUM(valor_total)
+                FILTER(
+                    WHERE id_tipo_mov = 2
+                )::numeric,
+                2
+            ) AS receita,
 
-        COUNT(DISTINCT id_produto)
-        AS produtos
+            COUNT(DISTINCT id_produto)
+            AS produtos
 
     FROM fato_movimentacao
 
-    """)
+    WHERE data >= CURRENT_DATE - INTERVAL '2 years'
+
+""")
     # ==========================================
     # FORNECEDORES
     # ==========================================
 
     fornecedores = query_db("""
 
-        SELECT
-
+       SELECT
             COUNT(DISTINCT id_fornecedor)
             AS fornecedores
 
         FROM fato_movimentacao
+
+        WHERE data >= CURRENT_DATE - INTERVAL '2 years'
 
     """)
 
@@ -310,13 +320,11 @@ def dashboard():
 
     entradas = query_db("""
 
-        SELECT
-
-            COUNT(*) AS entradas
-
-        FROM fato_movimentacao
-
-        WHERE id_tipo_mov = 1
+      SELECT
+        COUNT(*) AS entradas
+    FROM fato_movimentacao
+    WHERE id_tipo_mov = 1
+    AND data >= CURRENT_DATE - INTERVAL '2 years'
 
     """)
 
@@ -326,14 +334,12 @@ def dashboard():
 
     saidas = query_db("""
 
-        SELECT
-
-            COUNT(*) AS saidas
-
-        FROM fato_movimentacao
-
-        WHERE id_tipo_mov = 2
-
+       SELECT
+        COUNT(*) AS saidas
+    FROM fato_movimentacao
+    WHERE id_tipo_mov = 2
+    AND data >= CURRENT_DATE - INTERVAL '2 years'
+                      
     """)
 
  # ==========================================
@@ -352,6 +358,7 @@ def dashboard():
     FROM fato_movimentacao
 
     WHERE id_tipo_mov = 2
+    AND data >= CURRENT_DATE - INTERVAL '2 years'
 
     """)
     # ==========================================
@@ -373,6 +380,9 @@ def dashboard():
     JOIN dim_produto dp
         ON fm.id_produto = dp.id_produto
 
+    WHERE fm.data >= CURRENT_DATE - INTERVAL '2 years'
+    AND fm.id_tipo_mov = 2
+
     GROUP BY dp.categoria_prod
 
     ORDER BY total DESC
@@ -385,29 +395,10 @@ def dashboard():
     ajustes = query_db("""
 
         SELECT
-
-            COUNT(*) AS ajustes
-
-        FROM fato_movimentacao
-
-        WHERE id_tipo_mov = 3
-
-    """)
-
-    # ==========================================
-    # TICKET MÉDIO
-    # ==========================================
-
-    ticket_medio = query_db("""
-
-        SELECT
-
-            ROUND(
-                AVG(valor_total)::numeric,
-                2
-            ) AS ticket
-
-        FROM fato_movimentacao
+        COUNT(*) AS ajustes
+    FROM fato_movimentacao
+    WHERE id_tipo_mov = 3
+    AND data >= CURRENT_DATE - INTERVAL '2 years'
 
     """)
 
@@ -429,6 +420,9 @@ def dashboard():
         JOIN dim_produto p
         ON fm.id_produto = p.id_produto
 
+        WHERE fm.id_tipo_mov = 2
+          AND fm.data >= CURRENT_DATE - INTERVAL '2 years'
+
         GROUP BY p.descricao_prod
 
         ORDER BY total DESC
@@ -443,12 +437,8 @@ def dashboard():
 
     financeiro = query_db("""
 
-        SELECT
-
-            TO_CHAR(
-                data,
-                'DD/MM'
-            ) AS data,
+       SELECT
+            TO_CHAR(data, 'MM/YYYY') AS data,
 
             ROUND(
                 SUM(valor_total)::numeric,
@@ -457,14 +447,61 @@ def dashboard():
 
         FROM fato_movimentacao
 
-        GROUP BY data
+        WHERE id_tipo_mov = 2
+          AND data >= CURRENT_DATE - INTERVAL '2 years'
 
-        ORDER BY MIN(data)
+        GROUP BY TO_CHAR(data, 'MM/YYYY'),
+                DATE_TRUNC('month', data)
 
-        LIMIT 10
-
+        ORDER BY DATE_TRUNC('month', data);
+                          
     """)
 
+    # ==========================================
+    # CRESCIMENTO
+    # ==========================================
+    crescimento = query_db("""
+
+         SELECT
+    ROUND(
+        (
+            SUM(
+                CASE
+                    WHEN EXTRACT(MONTH FROM data) = 12
+                    THEN valor_total
+                    ELSE 0
+                END
+            )
+            -
+            SUM(
+                CASE
+                    WHEN EXTRACT(MONTH FROM data) = 1
+                    THEN valor_total
+                    ELSE 0
+                END
+            )
+        ) * 100.0
+        /
+        NULLIF(
+            SUM(
+                CASE
+                    WHEN EXTRACT(MONTH FROM data) = 1
+                    THEN valor_total
+                    ELSE 0
+                END
+            ),
+            0
+        ),
+        2
+    ) AS crescimento
+
+FROM fato_movimentacao
+
+WHERE id_tipo_mov = 2
+AND data >= CURRENT_DATE - INTERVAL '2 years'
+
+            """)
+#------------------------------------------------------#
     return render_template(
 
         "dashboard.html",
@@ -485,10 +522,217 @@ def dashboard():
 
         financeiro=financeiro,
         
-        categorias=categorias
+        categorias=categorias,
+        
+        crescimento=crescimento
+
 
     )
+    # ==========================================
+    # IA
+    # ==========================================
 
+@app.route("/ia")
+def ia():
+        
+        df_ia = pd.read_sql("""
+
+            SELECT
+                data,
+                valor_total
+
+            FROM fato_movimentacao
+
+            WHERE id_tipo_mov = 2
+
+        """, engine)
+
+        df_ia["data"] = pd.to_datetime(
+            df_ia["data"]
+        )
+
+        dados_diarios = (
+
+            df_ia.groupby("data")["valor_total"]
+            .sum()
+            .reset_index()
+
+        )
+
+        # COM OUTLIERS
+
+        media_preco = round(
+                dados_diarios["valor_total"].mean(),
+                2
+            )
+
+        mediana_preco = round(
+                dados_diarios["valor_total"].median(),
+                2
+            )
+
+        desvio_padrao = round(
+                dados_diarios["valor_total"].std(),
+                2
+            )
+
+        Q1 = dados_diarios["valor_total"].quantile(0.25)
+
+        Q3 = dados_diarios["valor_total"].quantile(0.75)
+
+        IQR = Q3 - Q1
+
+        limite_inferior = Q1 - (1.5 * IQR)
+
+        limite_superior = Q3 + (1.5 * IQR)
+
+
+        prophet_df = dados_diarios.rename(
+            columns={
+                "data": "ds",
+                "valor_total": "y"
+            }
+        )
+
+
+        modelo = Prophet(
+            daily_seasonality=True,
+            weekly_seasonality=True,
+            yearly_seasonality=False
+        )
+
+        modelo.fit(prophet_df)
+
+
+        future = modelo.make_future_dataframe(
+            periods=56
+        )
+
+        forecast = modelo.predict(future)
+
+        previsao_8_semanas = forecast.tail(56)
+
+        media_futura = round(
+            previsao_8_semanas["yhat"].mean(),
+            2
+        )
+
+        maximo_previsto = round(
+            previsao_8_semanas["yhat"].max(),
+            2
+        )
+
+        minimo_previsto = round(
+            previsao_8_semanas["yhat"].min(),
+            2
+        )
+
+
+        if media_futura > media_preco:
+            tendencia = "CRESCIMENTO"
+        elif media_futura < media_preco:
+            tendencia = "QUEDA"
+        else:
+            tendencia = "ESTÁVEL"
+
+        insight = f"""
+                A previsão para as próximas 8 semanas
+                indica faturamento médio estimado de
+                R$ {str(f"{media_futura:,.2f}").replace(',', 'X').replace('.', ',').replace('X', '.')}.
+
+                O maior valor previsto é
+                R$ {str(f"{maximo_previsto:,.2f}").replace(',', 'X').replace('.', ',').replace('X', '.')}.
+
+                O menor valor previsto é
+                R$ {str(f"{minimo_previsto:,.2f}").replace(',', 'X').replace('.', ',').replace('X', '.')}.
+
+                Tendência: {tendencia}.
+                """
+
+
+        outliers = dados_diarios[
+
+            (
+                dados_diarios["valor_total"]
+                < limite_inferior
+            )
+
+            |
+
+            (
+                dados_diarios["valor_total"]
+                > limite_superior
+            )
+
+        ]
+
+        dados_sem_outliers = dados_diarios[
+
+            (
+                dados_diarios["valor_total"]
+                >= limite_inferior
+            )
+
+            &
+
+            (
+                dados_diarios["valor_total"]
+                <= limite_superior
+            )
+
+        ]
+
+                # SEM OUTLIERS
+
+        media_limpa = round(
+            dados_sem_outliers["valor_total"].mean(),
+            2
+        )
+
+        mediana_limpa = round(
+            dados_sem_outliers["valor_total"].median(),
+            2
+        )
+
+        desvio_limpo = round(
+            dados_sem_outliers["valor_total"].std(),
+            2
+        )
+
+        return render_template(
+
+            "ia.html",
+
+            media=media_preco,
+
+            mediana=mediana_preco,
+
+            desvio=desvio_padrao,
+
+            media_limpa=media_limpa,
+            mediana_limpa=mediana_limpa,
+            desvio_limpo=desvio_limpo,
+
+            qtd_outliers=len(outliers),
+
+            dados_ia=dados_diarios.to_dict(
+                orient="records"
+            ),
+
+            dados_limpos=dados_sem_outliers.to_dict(
+                orient="records"
+            ),
+             previsao=previsao_8_semanas.to_dict(
+                orient="records"
+            ),
+                    
+            media_futura=media_futura,
+            maximo_previsto=maximo_previsto,
+            minimo_previsto=minimo_previsto,
+            tendencia=tendencia,
+            insight=insight
+
+        )
 # =========================================================
 # MODAL PRODUTO
 # =========================================================
@@ -508,8 +752,11 @@ def produto(nome):
             fm.quantidade,
             fm.valor_total,
             dt.nome_transp,
-            fm.data
-
+            TO_CHAR(
+                fm.data,
+                'DD/MM/YYYY'
+            ) AS data
+                     
         FROM fato_movimentacao fm
 
         LEFT JOIN dim_produto dp

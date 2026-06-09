@@ -90,22 +90,3 @@ SELECT * FROM tipo_mov
 
 SELECT  id_produto, descricao_prod, categoria_prod FROM dim_produto;
 
--- CONSULTA DO FATURAMENTO SEMANAL DO ANO DE 2026
-SELECT
-    EXTRACT(YEAR FROM data) AS ano,
-    EXTRACT(WEEK FROM data) AS semana,
-    ROUND(SUM(valor_total), 2) AS faturamento_semanal
-FROM fato_movimentacao
-WHERE (EXTRACT(YEAR FROM data) = 2026) AND (id_tipo_mov = 2) -- Considerando apenas as saídas para o faturamento
-GROUP BY ano, semana
-ORDER BY ano, semana;
-
-
-----------------------------------------------------------------------
-SELECT fm.data, fm.id_tipo_mov, fm.quantidade, fm.valor_total,tm.descricao_mov, COUNT (fm.id) AS quantidade
-FROM fato_movimentacao fm JOIN dim_tipo_mov tm ON (tm.id_tipo_mov = fm.id_tipo_mov) 
-WHERE EXTRACT(YEAR FROM fm.data) = 2026 
-AND EXTRACT(WEEK FROM fm.data) BETWEEN 22 AND 25
-AND fm.id_tipo_mov = 2
-GROUP BY quantidade, fm.id_tipo_mov;
-

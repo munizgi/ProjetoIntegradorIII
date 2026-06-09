@@ -758,7 +758,7 @@ canvas{
 }
 
 .ranking-item span{
-    color:#ff4d4d;
+    color:#d4f0ea;
     font-weight:700;
     white-space:nowrap;
 }
@@ -798,4 +798,14 @@ canvas{
     .big-card .canvas-box{
         height:320px;
     }
+
+    .big-card{
+    height:550px;
+}
+
+.canvas-box{
+    height:450px;
+    position:relative;
+}
+
 }
